@@ -4,6 +4,9 @@ import fs from "fs";
 import path from "path";
 import slugify from "slugify";
 
+
+
+
 /* ================= CREATE ================= */
 
 export const createSetup = async (req: Request, res: Response) => {
@@ -15,36 +18,88 @@ export const createSetup = async (req: Request, res: Response) => {
       gallery?: Express.Multer.File[];
     };
 
-    if (!title || !files?.mainImage?.[0]) {
-      return res.status(400).json({ message: "Title and main image required" });
+    if (!title?.trim()) {
+      return res.status(400).json({
+        message: "Title is required",
+      });
     }
 
-    const slug = slugify(title, { lower: true, strict: true });
+    if (!pageUrl?.trim()) {
+      return res.status(400).json({
+        message: "Page URL is required",
+      });
+    }
 
-    // prevent duplicate slug
+    if (!files?.mainImage?.[0]) {
+      return res.status(400).json({
+        message: "Main image is required",
+      });
+    }
+
+    const slug = slugify(title.trim(), {
+      lower: true,
+      strict: true,
+    });
+
+    /* ==========================
+       CHECK DUPLICATE SLUG
+    ========================== */
+
     const existingSlug = await prisma.setup.findUnique({
-      where: { slug },
+      where: {
+        slug,
+      },
     });
 
     if (existingSlug) {
-      return res.status(400).json({ message: "Slug already exists" });
+      return res.status(400).json({
+        message: "Slug already exists",
+      });
     }
 
-    // auto displayOrder for Setup
-    const lastSetup = await prisma.setup.findFirst({
-      orderBy: { displayOrder: "desc" },
+    /* ==========================
+       CHECK DUPLICATE PAGE URL
+    ========================== */
+
+    const existingPageUrl = await prisma.setup.findUnique({
+      where: {
+        pageUrl: pageUrl.trim(),
+      },
     });
 
-    const newOrder = lastSetup ? lastSetup.displayOrder + 1 : 1;
+    if (existingPageUrl) {
+      return res.status(400).json({
+        message: "Page URL already exists",
+      });
+    }
+
+    /* ==========================
+       AUTO DISPLAY ORDER
+    ========================== */
+
+    const lastSetup = await prisma.setup.findFirst({
+      orderBy: {
+        displayOrder: "desc",
+      },
+    });
+
+    const newOrder = lastSetup
+      ? lastSetup.displayOrder + 1
+      : 1;
+
+    /* ==========================
+       CREATE SETUP
+    ========================== */
 
     const setup = await prisma.setup.create({
       data: {
-        title,
-        pageUrl,
+        title: title.trim(),
+        pageUrl: pageUrl.trim(),
         slug,
-        content,
+        content: content || "",
         mainImage: `/uploads/${files.mainImage[0].filename}`,
         displayOrder: newOrder,
+
         gallery: {
           create:
             files.gallery?.map((file, index) => ({
@@ -53,17 +108,28 @@ export const createSetup = async (req: Request, res: Response) => {
             })) || [],
         },
       },
+
       include: {
         gallery: {
-          orderBy: { displayOrder: "asc" },
+          orderBy: {
+            displayOrder: "asc",
+          },
         },
       },
     });
 
-    res.status(201).json(setup);
+    return res.status(201).json({
+      success: true,
+      message: "Setup created successfully",
+      data: setup,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Create Setup Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
@@ -110,21 +176,24 @@ export const getSetupBySlug = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
-
 /* ================= UPDATE ================= */
 
 export const updateSetup = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content,pageUrl } = req.body;
+    const { title, content, pageUrl } = req.body;
 
     const existing = await prisma.setup.findUnique({
       where: { id },
-      include: { gallery: true },
+      include: {
+        gallery: true,
+      },
     });
 
     if (!existing) {
-      return res.status(404).json({ message: "Not found" });
+      return res.status(404).json({
+        message: "Setup not found",
+      });
     }
 
     const files = req.files as {
@@ -134,25 +203,41 @@ export const updateSetup = async (req: Request, res: Response) => {
 
     let updatedMainImage = existing.mainImage;
 
-    /* -------- Replace Main Image -------- */
+    /* ==========================
+       REPLACE MAIN IMAGE
+    ========================== */
+
     if (files?.mainImage?.[0]) {
-      const oldPath = path.join(process.cwd(), existing.mainImage);
+      const oldPath = path.join(
+        process.cwd(),
+        existing.mainImage.replace(/^\//, "")
+      );
 
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
       }
 
-      updatedMainImage = `/uploads/${files.mainImage[0].filename}`;
+      updatedMainImage =
+        `/uploads/${files.mainImage[0].filename}`;
     }
 
-    /* -------- Add New Gallery Images -------- */
+    /* ==========================
+       ADD NEW GALLERY IMAGES
+    ========================== */
+
     if (files?.gallery?.length) {
       const lastGallery = await prisma.setupGallery.findFirst({
-        where: { setupId: id },
-        orderBy: { displayOrder: "desc" },
+        where: {
+          setupId: id,
+        },
+        orderBy: {
+          displayOrder: "desc",
+        },
       });
 
-      let startOrder = lastGallery ? lastGallery.displayOrder + 1 : 1;
+      const startOrder = lastGallery
+        ? lastGallery.displayOrder + 1
+        : 1;
 
       await prisma.setupGallery.createMany({
         data: files.gallery.map((file, index) => ({
@@ -163,35 +248,108 @@ export const updateSetup = async (req: Request, res: Response) => {
       });
     }
 
-    /* -------- Safe Partial Update -------- */
+    /* ==========================
+       BUILD UPDATE DATA
+    ========================== */
+
     const updateData: any = {
       mainImage: updatedMainImage,
     };
 
-    if (title) {
+    /* ==========================
+       TITLE + SLUG UPDATE
+    ========================== */
+
+    if (title && title !== existing.title) {
+      const newSlug = slugify(title, {
+        lower: true,
+        strict: true,
+      });
+
+      const slugExists = await prisma.setup.findFirst({
+        where: {
+          slug: newSlug,
+          NOT: {
+            id,
+          },
+        },
+      });
+
+      if (slugExists) {
+        return res.status(400).json({
+          message: "Slug already exists",
+        });
+      }
+
       updateData.title = title;
-      updateData.pageUrl = pageUrl;
-      updateData.slug = slugify(title, { lower: true, strict: true });
+      updateData.slug = newSlug;
     }
+
+    /* ==========================
+       PAGE URL UPDATE
+    ========================== */
+
+    if (
+      pageUrl &&
+      pageUrl !== existing.pageUrl
+    ) {
+      const pageUrlExists =
+        await prisma.setup.findFirst({
+          where: {
+            pageUrl,
+            NOT: {
+              id,
+            },
+          },
+        });
+
+      if (pageUrlExists) {
+        return res.status(400).json({
+          message: "Page URL already exists",
+        });
+      }
+
+      updateData.pageUrl = pageUrl;
+    }
+
+    /* ==========================
+       CONTENT UPDATE
+    ========================== */
 
     if (content !== undefined) {
       updateData.content = content;
     }
 
+    /* ==========================
+       SAVE
+    ========================== */
+
     const updated = await prisma.setup.update({
-      where: { id },
+      where: {
+        id,
+      },
       data: updateData,
       include: {
         gallery: {
-          orderBy: { displayOrder: "asc" },
+          orderBy: {
+            displayOrder: "asc",
+          },
         },
       },
     });
 
-    res.json(updated);
+    return res.json({
+      success: true,
+      message: "Setup updated successfully",
+      data: updated,
+    });
   } catch (error) {
     console.error("Update Setup Error:", error);
-    res.status(500).json({ message: "Server Error" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
 
@@ -239,16 +397,18 @@ export const deleteSetup = async (req: Request, res: Response) => {
 
 export const reorderSetups = async (req: Request, res: Response) => {
   try {
-    const { order } = req.body;
+    const updates = req.body.order || req.body;
 
-    await Promise.all(
-      order.map((item: any) =>
-        prisma.setup.update({
-          where: { id: item.id },
-          data: { displayOrder: item.displayOrder },
-        })
-      )
-    );
+   await Promise.all(
+  updates.map((item: any) =>
+    prisma.setup.update({
+      where: { id: item.id },
+      data: {
+        displayOrder: item.displayOrder,
+      },
+    })
+  )
+);
 
     res.json({ message: "Reordered successfully" });
   } catch (error) {
@@ -280,6 +440,8 @@ export const getSetupById = async (req: Request, res: Response) => {
 };
 
 
+/* ================= DELETE GALLERY IMAGE ================= */
+
 export const deleteSetupGalleryImage = async (
   req: Request,
   res: Response
@@ -288,49 +450,87 @@ export const deleteSetupGalleryImage = async (
     const { imageId } = req.params;
 
     const image = await prisma.setupGallery.findUnique({
-      where: { id: imageId },
+      where: {
+        id: imageId,
+      },
     });
 
     if (!image) {
-      return res.status(404).json({ message: "Image not found" });
+      return res.status(404).json({
+        message: "Image not found",
+      });
     }
 
-    const imagePath = path.join(process.cwd(), image.imageUrl);
+    // Remove physical file
+    const imagePath = path.join(
+      process.cwd(),
+      image.imageUrl.replace(/^\//, "")
+    );
 
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
 
+    // Remove DB record
     await prisma.setupGallery.delete({
-      where: { id: imageId },
+      where: {
+        id: imageId,
+      },
     });
 
-    res.json({ message: "Gallery image deleted" });
+    return res.json({
+      success: true,
+      message: "Gallery image deleted successfully",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Delete Setup Gallery Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };
+
+/* ================= REORDER GALLERY ================= */
 
 export const reorderSetupGallery = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const { order } = req.body;
+    const updates = req.body.order || req.body;
+
+    if (!Array.isArray(updates)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order payload",
+      });
+    }
 
     await Promise.all(
-      order.map((item: any) =>
+      updates.map((item: any) =>
         prisma.setupGallery.update({
-          where: { id: item.id },
-          data: { displayOrder: item.displayOrder },
+          where: {
+            id: item.id,
+          },
+          data: {
+            displayOrder: item.displayOrder,
+          },
         })
       )
     );
 
-    res.json({ message: "Gallery reordered successfully" });
+    return res.json({
+      success: true,
+      message: "Gallery reordered successfully",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error("Reorder Setup Gallery Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
   }
 };

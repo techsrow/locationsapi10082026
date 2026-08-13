@@ -21,41 +21,59 @@ const setupUpload = upload.fields([
   { name: "gallery", maxCount: 20 },
 ]);
 
-/* ================= PUBLIC ROUTES ================= */
+/* ==================================
+   ADMIN ROUTES
+================================== */
 
-router.get("/", getAllSetups);
+router.get("/id/:id", protect, getSetupById);
 
-// ADMIN FETCH BY ID (must be before slug)
-router.get("/id/:id", getSetupById);
+router.post(
+  "/",
+  protect,
+  setupUpload,
+  createSetup
+);
 
-/* ================= GALLERY ROUTES (PROTECTED) ================= */
+router.put(
+  "/:id",
+  protect,
+  setupUpload,
+  updateSetup
+);
 
-// Delete single gallery image
+router.delete(
+  "/:id",
+  protect,
+  deleteSetup
+);
+
+router.patch(
+  "/reorder",
+  protect,
+  reorderSetups
+);
+
+/* ==================================
+   GALLERY ROUTES
+================================== */
+
 router.delete(
   "/gallery/:imageId",
   protect,
   deleteSetupGalleryImage
 );
 
-// Reorder gallery images
 router.patch(
   "/gallery/reorder",
   protect,
   reorderSetupGallery
 );
 
-/* ================= PROTECTED SETUP ROUTES ================= */
+/* ==================================
+   PUBLIC ROUTES
+================================== */
 
-router.post("/", protect, setupUpload, createSetup);
-
-router.put("/:id", protect, setupUpload, updateSetup);
-
-router.delete("/:id", protect, deleteSetup);
-
-// Reorder parent setups
-router.patch("/reorder", protect, reorderSetups);
-
-/* ================= PUBLIC SLUG ROUTE (ALWAYS LAST) ================= */
+router.get("/", getAllSetups);
 
 router.get("/:slug", getSetupBySlug);
 
