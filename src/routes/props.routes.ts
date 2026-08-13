@@ -1,9 +1,11 @@
 import express from "express";
 import { protect } from "../middlewares/auth.middleware";
 import upload from "../middlewares/upload";
+
 import {
   createProps,
   getAllProps,
+  getSingleProps,
   updateProps,
   deleteProps,
   reorderProps,
@@ -12,12 +14,16 @@ import {
 const router = express.Router();
 
 router.post("/", protect, upload.single("image"), createProps);
+
 router.get("/", getAllProps);
 
-router.put("/reorder", protect, reorderProps);   // ✅ ABOVE :id
+// ADD THIS
+router.get("/:id", getSingleProps);
+
+router.put("/reorder", protect, reorderProps);
 
 router.put("/:id", protect, upload.single("image"), updateProps);
-router.delete("/:id", protect, deleteProps);
 
+router.delete("/:id", protect, deleteProps);
 
 export default router;
