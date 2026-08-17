@@ -119,7 +119,36 @@ export const lockBooking = async (data: {
       (totalAmount * 0.5).toFixed(2)
     );
 
-    const bookingId = `LH-${Date.now()}`;
+    // const bookingId = `LH-${Date.now()}`;
+    /* =========================
+   Generate Booking Number
+========================= */
+
+const lastBooking = await tx.booking.findFirst({
+  orderBy: {
+    createdAt: "desc",
+  },
+  select: {
+    bookingId: true,
+  },
+});
+
+let nextNumber = 1;
+
+if (
+  lastBooking?.bookingId &&
+  lastBooking.bookingId.startsWith("LH-")
+) {
+  const currentNumber = parseInt(
+    lastBooking.bookingId.replace("LH-", "")
+  );
+
+  if (!isNaN(currentNumber)) {
+    nextNumber = currentNumber + 1;
+  }
+}
+
+const bookingId = `LH-${String(nextNumber).padStart(3, "0")}`;
 
     const lockExpiresAt = new Date(
       Date.now() + 10 * 60 * 1000

@@ -147,6 +147,7 @@ model Slot {
 
 model Booking {
   id                String        @id @default(uuid())
+     bookingNumber Int? @unique
   bookingId         String        @unique
   productId         String
   bookingDate       DateTime

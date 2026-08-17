@@ -85,7 +85,38 @@ const lockBooking = async (data) => {
         const gstAmount = Number((baseAmount * 0.18).toFixed(2));
         const totalAmount = Number((baseAmount + gstAmount).toFixed(2));
         const bookingAmount = Number((totalAmount * 0.5).toFixed(2));
-        const bookingId = `LH-${Date.now()}`;
+        // const bookingId = `LH-${Date.now()}`;
+        const year = new Date().getFullYear();
+
+const lastBooking = await tx.booking.findFirst({
+  where: {
+    bookingId: {
+      startsWith: `LH-${year}-`,
+    },
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+  select: {
+    bookingId: true,
+  },
+});
+
+let nextNumber = 1;
+
+if (lastBooking?.bookingId) {
+  const lastNumber = Number(
+    lastBooking.bookingId.split("-")[2]
+  );
+
+  if (!isNaN(lastNumber)) {
+    nextNumber = lastNumber + 1;
+  }
+}
+
+const bookingId = `LH-${year}-${String(
+  nextNumber
+).padStart(3, "0")}`;
         const lockExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
         /* =========================
            6️⃣ Create Booking
