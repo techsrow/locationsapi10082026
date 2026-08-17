@@ -2,6 +2,7 @@ import prisma from "../lib/prisma";
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 
+
 /* =========================
    LOCK BOOKING (CUSTOMER)
 ========================= */
@@ -254,116 +255,261 @@ export const getCalendarBookings = async (req: Request, res: Response) => {
 };
 
 
+
+
 /* =========================
-   ADMIN LOCK SLOT
+   ADMIN LOCK DATE
 ========================= */
 
-export const lockDateByAdmin = async (req: Request, res: Response) => {
-
+export const lockDateByAdmin = async (
+  req: Request,
+  res: Response
+) => {
   try {
-
     const { productId, date } = req.body;
 
-    if (!productId || !date) {
+    if (!date) {
       return res.status(400).json({
-        message: "productId and date required"
+        success: false,
+        message: "Date is required",
       });
     }
 
     const bookingDate = new Date(date);
 
-    /* ---------------------------
-       Get all slots of product
-    ---------------------------- */
+    let slots: {
+      id: string;
+      productId: string;
+    }[] = [];
 
-    const slots = await prisma.slot.findMany({
-      where: {
-        productId
-      }
-    });
+    /* -------------------------
+       ALL PRODUCTS
+    -------------------------- */
+
+    if (!productId || productId === "ALL") {
+      slots = await prisma.slot.findMany({
+        select: {
+          id: true,
+          productId: true,
+        },
+      });
+    }
+
+    /* -------------------------
+       SINGLE PRODUCT
+    -------------------------- */
+
+    else {
+      slots = await prisma.slot.findMany({
+        where: {
+          productId,
+        },
+        select: {
+          id: true,
+          productId: true,
+        },
+      });
+    }
 
     if (!slots.length) {
       return res.status(404).json({
-        message: "No slots found for product"
+        success: false,
+        message: "No slots found",
       });
     }
 
-    /* ---------------------------
-       Create lock for each slot
-    ---------------------------- */
+    /* -------------------------
+       REMOVE DUPLICATES
+    -------------------------- */
 
-    const locks = await prisma.$transaction(
+    const existingLocks = await prisma.slotLock.findMany({
+      where: {
+        date: bookingDate,
+        slotId: {
+          in: slots.map((s) => s.id),
+        },
+      },
+      select: {
+        slotId: true,
+      },
+    });
 
-      slots.map((slot) =>
-        prisma.slotLock.create({
-          data: {
-            productId,
-            slotId: slot.id,
-            date: bookingDate,
-            locked: true
-          }
-        })
-      )
-
+    const lockedSlotIds = new Set(
+      existingLocks.map((l) => l.slotId)
     );
 
-    res.json({
+    const slotsToLock = slots.filter(
+      (slot) => !lockedSlotIds.has(slot.id)
+    );
+
+    if (!slotsToLock.length) {
+      return res.json({
+        success: true,
+        message: "Date already locked",
+        totalLocked: 0,
+      });
+    }
+
+    /* -------------------------
+       CREATE LOCKS
+    -------------------------- */
+
+    const locks = await prisma.$transaction(
+      slotsToLock.map((slot) =>
+        prisma.slotLock.create({
+          data: {
+            productId: slot.productId,
+            slotId: slot.id,
+            date: bookingDate,
+            locked: true,
+          },
+        })
+      )
+    );
+
+    return res.json({
       success: true,
-      message: "Date locked for all slots",
-      locks
+      message:
+        !productId || productId === "ALL"
+          ? "Date locked for all products"
+          : "Date locked successfully",
+      totalLocked: locks.length,
+      lockedDate: date,
     });
-
   } catch (error) {
-
     console.error("Lock date error:", error);
 
-    res.status(500).json({
-      message: "Date lock failed"
+    return res.status(500).json({
+      success: false,
+      message: "Date lock failed",
     });
-
   }
-
 };
 
+/* =========================
+   GET LOCKED DATES
+========================= */
 
-export const getLockedDates = async (req: Request, res: Response) => {
-
+export const getLockedDates = async (
+  req: Request,
+  res: Response
+) => {
   try {
-
     const { productId } = req.query;
 
-    if (!productId) {
-      return res.status(400).json({
-        message: "productId required"
-      });
+    let whereClause: any = {
+      locked: true,
+    };
+
+    /* -------------------------
+       FILTER PRODUCT
+    -------------------------- */
+
+    if (
+      productId &&
+      productId !== "ALL"
+    ) {
+      whereClause.productId =
+        productId as string;
     }
 
     const locks = await prisma.slotLock.findMany({
-      where: {
-        productId: productId as string,
-        locked: true
-      },
+      where: whereClause,
       select: {
-        date: true
-      }
+        date: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
     });
 
     const uniqueDates = [
       ...new Set(
-        locks.map(l => l.date.toISOString().split("T")[0])
-      )
+        locks.map((lock) =>
+          lock.date.toISOString().split("T")[0]
+        )
+      ),
     ];
 
-    res.json(uniqueDates);
-
-  } catch (error) {
-
-    console.error("Locked dates error", error);
-
-    res.status(500).json({
-      message: "Failed to load locked dates"
+    return res.json({
+      success: true,
+      totalDates: uniqueDates.length,
+      dates: uniqueDates,
     });
+  } catch (error) {
+    console.error(
+      "Get locked dates error:",
+      error
+    );
 
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load locked dates",
+    });
   }
+};
 
+/* =========================
+   UNLOCK DATE
+========================= */
+
+export const unlockDateByAdmin = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { productId, date } = req.body;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is required",
+      });
+    }
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const whereClause: any = {
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+
+    if (
+      productId &&
+      productId !== "ALL"
+    ) {
+      whereClause.productId =
+        productId;
+    }
+
+    const result =
+      await prisma.slotLock.deleteMany({
+        where: whereClause,
+      });
+
+    return res.json({
+      success: true,
+      message:
+        productId === "ALL"
+          ? "Date unlocked for all products"
+          : "Date unlocked successfully",
+      deletedLocks: result.count,
+    });
+  } catch (error) {
+    console.error(
+      "Unlock date error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Date unlock failed",
+    });
+  }
 };

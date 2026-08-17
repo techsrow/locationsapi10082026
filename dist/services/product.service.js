@@ -3,11 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProductById = exports.createSlot = exports.createProduct = void 0;
+exports.getProductById = exports.createSlot = exports.updateProduct = exports.createProduct = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const slugify_1 = __importDefault(require("slugify"));
 const createProduct = async (data) => {
-    const slug = (0, slugify_1.default)(data.name, { lower: true });
+    const slug = (0, slugify_1.default)(data.name, {
+        lower: true,
+        strict: true,
+        trim: true
+    });
     const product = await prisma_1.default.product.create({
         data: {
             name: data.name,
@@ -31,6 +35,29 @@ const createProduct = async (data) => {
     return product;
 };
 exports.createProduct = createProduct;
+const updateProduct = async (id, data) => {
+    const slug = data.slug && data.slug.trim() !== ""
+        ? (0, slugify_1.default)(data.slug, {
+            lower: true,
+            strict: true,
+            trim: true
+        })
+        : (0, slugify_1.default)(data.name, {
+            lower: true,
+            strict: true,
+            trim: true
+        });
+    return prisma_1.default.product.update({
+        where: { id },
+        data: {
+            name: data.name,
+            slug,
+            price: data.price,
+            bookingAmount: data.bookingAmount
+        }
+    });
+};
+exports.updateProduct = updateProduct;
 const createSlot = async (data) => {
     const product = await prisma_1.default.product.findUnique({
         where: { id: data.productId }

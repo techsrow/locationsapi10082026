@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteSlot = exports.deleteProduct = exports.updateProduct = exports.addSlot = exports.addProduct = exports.getProductBySlug = exports.getProductById = exports.getProducts = void 0;
+exports.deleteSlot = exports.deleteProduct = exports.addSlot = exports.updateProduct = exports.addProduct = exports.getProductBySlug = exports.getProductById = exports.getProducts = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const productService = __importStar(require("../services/product.service"));
 /* ---------------------------------------------------
@@ -150,6 +150,33 @@ const addProduct = async (req, res) => {
 };
 exports.addProduct = addProduct;
 /* ---------------------------------------------------
+   Update PRODUCT
+--------------------------------------------------- */
+const updateProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, slug, price, bookingAmount } = req.body;
+        const product = await productService.updateProduct(id, {
+            name,
+            slug,
+            price: Number(price),
+            bookingAmount: Number(bookingAmount)
+        });
+        res.json({
+            success: true,
+            product
+        });
+    }
+    catch (error) {
+        console.error("Update product error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update product"
+        });
+    }
+};
+exports.updateProduct = updateProduct;
+/* ---------------------------------------------------
    ADD SLOT
 --------------------------------------------------- */
 const addSlot = async (req, res) => {
@@ -199,34 +226,6 @@ const addSlot = async (req, res) => {
     }
 };
 exports.addSlot = addSlot;
-/* ---------------------------------------------------
-   UPDATE PRODUCT
---------------------------------------------------- */
-const updateProduct = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, price, bookingAmount } = req.body;
-        const product = await prisma_1.default.product.update({
-            where: { id },
-            data: {
-                name,
-                price,
-                bookingAmount
-            }
-        });
-        res.json({
-            success: true,
-            product
-        });
-    }
-    catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Failed to update product"
-        });
-    }
-};
-exports.updateProduct = updateProduct;
 /* ---------------------------------------------------
    DELETE PRODUCT
 --------------------------------------------------- */

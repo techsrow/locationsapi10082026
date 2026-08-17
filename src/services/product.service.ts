@@ -14,7 +14,11 @@ interface CreateProductInput {
 
 export const createProduct = async (data: CreateProductInput) => {
 
-  const slug = slugify(data.name, { lower: true });
+  const slug = slugify(data.name, {
+  lower: true,
+  strict: true,
+  trim: true
+});
 
   const product = await prisma.product.create({
     data: {
@@ -40,6 +44,42 @@ export const createProduct = async (data: CreateProductInput) => {
   });
 
   return product;
+};
+
+
+export const updateProduct = async (
+  id: string,
+  data: {
+    name: string;
+    slug?: string;
+    price: number;
+    bookingAmount: number;
+  }
+) => {
+
+  const slug =
+    data.slug && data.slug.trim() !== ""
+      ? slugify(data.slug, {
+          lower: true,
+          strict: true,
+          trim: true
+        })
+      : slugify(data.name, {
+          lower: true,
+          strict: true,
+          trim: true
+        });
+
+  return prisma.product.update({
+    where: { id },
+    data: {
+      name: data.name,
+      slug,
+      price: data.price,
+      bookingAmount: data.bookingAmount
+    }
+  });
+
 };
 
 

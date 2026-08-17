@@ -12,11 +12,30 @@ import {
 
 const router = express.Router();
 
+// router.get("/", getProducts);
+
+// router.get("/id/:id", getProductById);
+
+// // router.get("/slug/:slug", getProductBySlug);
+
+// router.get("/:slug", getProductBySlug);
+
+// router.post("/add", addProduct);
+
+// router.post("/add-slot", addSlot);
+
+// router.put("/:id", updateProduct);
+
+// router.delete("/:id", deleteProduct);
+
+// router.delete("/slot/:id", deleteSlot);
+
+// export default router;
+
+
 router.get("/", getProducts);
 
 router.get("/id/:id", getProductById);
-
-// router.get("/slug/:slug", getProductBySlug);
 
 router.get("/:slug", getProductBySlug);
 
@@ -24,10 +43,13 @@ router.post("/add", addProduct);
 
 router.post("/add-slot", addSlot);
 
+/* PUT */
 router.put("/:id", updateProduct);
 
-router.delete("/:id", deleteProduct);
-
+/* DELETE SLOT FIRST */
 router.delete("/slot/:id", deleteSlot);
+
+/* DELETE PRODUCT LAST */
+router.delete("/:id", deleteProduct);
 
 export default router;

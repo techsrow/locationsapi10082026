@@ -12,6 +12,8 @@ router.post("/lock", booking_controller_1.lockBooking);
 router.get("/calendar", booking_controller_1.getCalendarBookings);
 /* ADMIN DATE LOCK */
 router.post("/admin/lock-date", booking_controller_1.lockDateByAdmin);
+router.post("/admin/unlock-date", booking_controller_1.unlockDateByAdmin);
+router.get("/admin/locked-dates", booking_controller_1.getLockedDates);
 /* GET LOCKED DATES */
 router.get("/locked-dates", booking_controller_1.getLockedDates);
 /* GET ALL BOOKINGS */

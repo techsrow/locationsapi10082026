@@ -5,7 +5,8 @@ import {
   getAllBookings,
   getCalendarBookings,
   lockDateByAdmin,
-  getLockedDates
+  getLockedDates,
+  unlockDateByAdmin
 } from "../controllers/booking.controller";
 
 const router = express.Router();
@@ -19,8 +20,20 @@ router.get("/calendar", getCalendarBookings);
 /* ADMIN DATE LOCK */
 router.post("/admin/lock-date", lockDateByAdmin);
 
+router.post(
+  "/admin/unlock-date",
+  unlockDateByAdmin
+);
+
+router.get(
+  "/admin/locked-dates",
+  getLockedDates
+);
+
 /* GET LOCKED DATES */
 router.get("/locked-dates", getLockedDates);
+
+
 
 /* GET ALL BOOKINGS */
 router.get("/", getAllBookings);

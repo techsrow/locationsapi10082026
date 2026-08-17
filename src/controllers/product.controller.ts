@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma";
 import * as productService from "../services/product.service";
+import slugify from "slugify";
 
 
 /* ---------------------------------------------------
@@ -150,6 +151,50 @@ export const addProduct = async (req: Request, res: Response) => {
 
 
 /* ---------------------------------------------------
+   Update PRODUCT
+--------------------------------------------------- */
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+
+    const { id } = req.params;
+
+    const {
+      name,
+      slug,
+      price,
+      bookingAmount
+    } = req.body;
+
+    const product = await productService.updateProduct(
+      id,
+      {
+        name,
+        slug,
+        price: Number(price),
+        bookingAmount: Number(bookingAmount)
+      }
+    );
+
+    res.json({
+      success: true,
+      product
+    });
+
+  } catch (error: any) {
+
+    console.error("Update product error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update product"
+    });
+
+  }
+};
+
+
+/* ---------------------------------------------------
    ADD SLOT
 --------------------------------------------------- */
 
@@ -213,41 +258,10 @@ if (overlap) {
 };
 
 
-/* ---------------------------------------------------
-   UPDATE PRODUCT
---------------------------------------------------- */
 
-export const updateProduct = async (req: Request, res: Response) => {
 
-  try {
 
-    const { id } = req.params;
-    const { name, price, bookingAmount } = req.body;
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        name,
-        price,
-        bookingAmount
-      }
-    });
-
-    res.json({
-      success: true,
-      product
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update product"
-    });
-
-  }
-
-};
 
 
 /* ---------------------------------------------------
