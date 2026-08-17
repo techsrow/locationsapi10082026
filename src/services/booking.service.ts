@@ -20,14 +20,39 @@ export const lockBooking = async (data: {
 
   return await prisma.$transaction(async (tx) => {
 
-    // 1️⃣ Validate product exists
+    /* =========================
+       1️⃣ Validate Product
+    ========================= */
+
     const product = await tx.product.findUnique({
       where: { id: productId },
     });
 
-    if (!product) throw new Error("Product not found");
+    if (!product) {
+      throw new Error("Product not found");
+    }
 
-    // 2️⃣ Validate slots belong to product
+    /* =========================
+       2️⃣ Check Admin Locked Date
+    ========================= */
+
+    const lockedDate = await tx.dateLock.findFirst({
+      where: {
+        date: normalizedDate,
+      },
+    });
+
+    if (lockedDate) {
+      throw new Error(
+        lockedDate.reason ||
+        "This date has been blocked by admin"
+      );
+    }
+
+    /* =========================
+       3️⃣ Validate Slots
+    ========================= */
+
     const slots = await tx.slot.findMany({
       where: {
         id: { in: slotIds },
@@ -39,40 +64,71 @@ export const lockBooking = async (data: {
       throw new Error("Invalid slot selection");
     }
 
-    // 3️⃣ Check availability
+    /* =========================
+       4️⃣ Check Slot Availability
+    ========================= */
+
     for (const slotId of slotIds) {
+
       const existing = await tx.booking.findFirst({
         where: {
           productId,
           bookingDate: normalizedDate,
           OR: [
-            { paymentStatus: "paid" },
+            {
+              paymentStatus: "paid",
+            },
             {
               paymentStatus: "locked",
-              lockExpiresAt: { gt: new Date() },
+              lockExpiresAt: {
+                gt: new Date(),
+              },
             },
           ],
           slots: {
-            some: { slotId },
+            some: {
+              slotId,
+            },
           },
         },
       });
 
       if (existing) {
-        throw new Error("One of the selected slots is already booked");
+        throw new Error(
+          "One of the selected slots is already booked"
+        );
       }
     }
 
-    // 4️⃣ Pricing Calculation
-    const baseAmount = Number(product.price) * slotIds.length;
-    const gstAmount = Number((baseAmount * 0.18).toFixed(2));
-    const totalAmount = Number((baseAmount + gstAmount).toFixed(2));
-    const bookingAmount = Number((totalAmount * 0.5).toFixed(2));
+    /* =========================
+       5️⃣ Pricing Calculation
+    ========================= */
 
-    const bookingId = "LH-" + Date.now();
-    const lockExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const baseAmount =
+      Number(product.price) * slotIds.length;
 
-    // 5️⃣ Create booking
+    const gstAmount = Number(
+      (baseAmount * 0.18).toFixed(2)
+    );
+
+    const totalAmount = Number(
+      (baseAmount + gstAmount).toFixed(2)
+    );
+
+    const bookingAmount = Number(
+      (totalAmount * 0.5).toFixed(2)
+    );
+
+    const bookingId = `LH-${Date.now()}`;
+
+    const lockExpiresAt = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    /* =========================
+       6️⃣ Create Booking
+    ========================= */
+
     const booking = await tx.booking.create({
       data: {
         bookingId,
@@ -83,6 +139,7 @@ export const lockBooking = async (data: {
         bookingAmount,
         paymentStatus: "locked",
         lockExpiresAt,
+
         slots: {
           create: slotIds.map((slotId) => ({
             slotId,

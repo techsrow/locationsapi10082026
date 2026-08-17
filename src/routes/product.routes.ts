@@ -7,7 +7,8 @@ import {
   addSlot,
   updateProduct,
   deleteProduct,
-  deleteSlot
+  deleteSlot,
+  updateSlot
 } from "../controllers/product.controller";
 
 const router = express.Router();
@@ -44,7 +45,7 @@ router.post("/add", addProduct);
 router.post("/add-slot", addSlot);
 
 /* PUT */
-router.put("/:id", updateProduct);
+router.put("/slot/:id", updateSlot);
 
 /* DELETE SLOT FIRST */
 router.delete("/slot/:id", deleteSlot);

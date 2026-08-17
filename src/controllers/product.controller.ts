@@ -4,6 +4,33 @@ import * as productService from "../services/product.service";
 import slugify from "slugify";
 
 
+
+function formatSlotLabel(
+  startTime: string,
+  endTime: string
+) {
+  const format = (time: string) => {
+    const [hours, minutes] =
+      time.split(":").map(Number);
+
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+
+    return date.toLocaleTimeString(
+      "en-US",
+      {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }
+    );
+  };
+
+  return `${format(
+    startTime
+  )} - ${format(endTime)}`;
+}
 /* ---------------------------------------------------
    GET ALL PRODUCTS
 --------------------------------------------------- */
@@ -321,27 +348,164 @@ export const deleteProduct = async (req: Request, res: Response) => {
    DELETE SLOT
 --------------------------------------------------- */
 
-export const deleteSlot = async (req: Request, res: Response) => {
+/* ---------------------------------------------------
+   DELETE SLOT
+--------------------------------------------------- */
 
+export const deleteSlot = async (
+  req: Request,
+  res: Response
+) => {
   try {
-
     const { id } = req.params;
 
+    const bookingCount =
+      await prisma.bookingSlot.count({
+        where: {
+          slotId: id,
+        },
+      });
+
+    if (bookingCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This slot cannot be deleted because bookings exist.",
+      });
+    }
+
+    const lockCount =
+      await prisma.slotLock.count({
+        where: {
+          slotId: id,
+        },
+      });
+
+    if (lockCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This slot cannot be deleted because locked dates exist.",
+      });
+    }
+
     await prisma.slot.delete({
-      where: { id }
+      where: { id },
     });
 
-    res.json({
-      success: true
+    return res.json({
+      success: true,
+      message: "Slot deleted successfully",
     });
+  } catch (error: any) {
+    console.error("DELETE SLOT ERROR:", error);
 
-  } catch (error) {
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Failed to delete slot"
+      message: "Failed to delete slot",
+    });
+  }
+};
+
+
+/* ---------------------------------------------------
+   UPDATE SLOT
+--------------------------------------------------- */
+
+export const updateSlot = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      startTime,
+      endTime,
+    } = req.body;
+
+    if (!startTime || !endTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Start time and end time are required",
+      });
+    }
+
+    if (startTime >= endTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Start time must be before end time",
+      });
+    }
+
+    const slot = await prisma.slot.findUnique({
+      where: { id },
     });
 
-  }
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Slot not found",
+      });
+    }
 
+    /* Check overlap except current slot */
+
+    const existingSlots =
+      await prisma.slot.findMany({
+        where: {
+          productId: slot.productId,
+          NOT: {
+            id,
+          },
+        },
+      });
+
+    const overlap = existingSlots.some(
+      (s) =>
+        startTime < s.endTime &&
+        endTime > s.startTime
+    );
+
+    if (overlap) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Slot overlaps with existing slot",
+      });
+    }
+
+    const label = formatSlotLabel(
+      startTime,
+      endTime
+    );
+
+    const updatedSlot =
+      await prisma.slot.update({
+        where: { id },
+        data: {
+          startTime,
+          endTime,
+          label,
+        },
+      });
+
+    return res.json({
+      success: true,
+      message: "Slot updated successfully",
+      slot: updatedSlot,
+    });
+  } catch (error: any) {
+    console.error(
+      "UPDATE SLOT ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to update slot",
+    });
+  }
 };

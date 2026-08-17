@@ -198,6 +198,13 @@ model SlotLock {
   @@index([slotId], map: "SlotLock_slotId_fkey")
 }
 
+model DateLock {
+  id        String   @id @default(uuid())
+  date      DateTime @unique
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
 enum Role {
   ADMIN
 }
