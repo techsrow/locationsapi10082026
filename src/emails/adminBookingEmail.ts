@@ -31,7 +31,7 @@ The booking details are below.
 
 <!-- BOOKING DETAILS -->
 
-<div style="padding:30px">
+<div style="padding:10px">
 
 <h2 style="text-align:center;color:#333">
 <span style="background:#f3d67b;padding:3px 6px">Booking</span> Details
@@ -135,7 +135,7 @@ Dues (Excl GST)
 
 <!-- NOTES -->
 
-<div style="padding:30px;color:#555">
+<div style="padding:10px;color:#555">
 
 <h3>Please note :</h3>
 

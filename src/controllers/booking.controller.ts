@@ -1,6 +1,6 @@
 import prisma from "../lib/prisma";
 import { Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
+
 
 
 /* =========================
@@ -52,6 +52,28 @@ export const lockBooking = async (req: Request, res: Response) => {
       });
     }
 
+
+    const lastBooking = await prisma.booking.findFirst({
+  where: {
+    bookingNumber: {
+      not: null,
+    },
+  },
+  orderBy: {
+    bookingNumber: "desc",
+  },
+  select: {
+    bookingNumber: true,
+  },
+});
+
+const nextBookingNumber =
+  (lastBooking?.bookingNumber || 0) + 1;
+
+const bookingId = `LH-${String(
+  nextBookingNumber
+).padStart(4, "0")}`;
+
     /* =========================
        CREATE BOOKING
     ========================= */
@@ -59,35 +81,33 @@ export const lockBooking = async (req: Request, res: Response) => {
     const lockExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     const booking = await prisma.booking.create({
-      data: {
+  data: {
+    bookingNumber: nextBookingNumber,
+    bookingId,
 
-        bookingId: uuidv4(),
+    productId,
+    bookingDate,
 
-        productId,
+    firstName,
+    lastName,
+    email,
+    phone,
+    address,
+    city,
+    state,
+    postcode,
 
-        bookingDate,
+    paymentStatus: "locked",
 
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        postcode,
+    lockExpiresAt: lockExpires,
 
-        paymentStatus: "locked",
-
-        lockExpiresAt: lockExpires,
-
-        slots: {
-          create: slotIds.map((slotId: string) => ({
-            slotId
-          }))
-        }
-
-      }
-    });
+    slots: {
+      create: slotIds.map((slotId: string) => ({
+        slotId,
+      })),
+    },
+  },
+});
 
     return res.json({
       success: true,

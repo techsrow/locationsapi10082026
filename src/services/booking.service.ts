@@ -123,32 +123,26 @@ export const lockBooking = async (data: {
     /* =========================
    Generate Booking Number
 ========================= */
-
 const lastBooking = await tx.booking.findFirst({
+  where: {
+    bookingNumber: {
+      not: null,
+    },
+  },
   orderBy: {
-    createdAt: "desc",
+    bookingNumber: "desc",
   },
   select: {
-    bookingId: true,
+    bookingNumber: true,
   },
 });
 
-let nextNumber = 1;
+const nextBookingNumber =
+  (lastBooking?.bookingNumber || 0) + 1;
 
-if (
-  lastBooking?.bookingId &&
-  lastBooking.bookingId.startsWith("LH-")
-) {
-  const currentNumber = parseInt(
-    lastBooking.bookingId.replace("LH-", "")
-  );
-
-  if (!isNaN(currentNumber)) {
-    nextNumber = currentNumber + 1;
-  }
-}
-
-const bookingId = `LH-${String(nextNumber).padStart(3, "0")}`;
+const bookingId = `LH-${String(
+  nextBookingNumber
+).padStart(4, "0")}`;
 
     const lockExpiresAt = new Date(
       Date.now() + 10 * 60 * 1000
@@ -158,24 +152,28 @@ const bookingId = `LH-${String(nextNumber).padStart(3, "0")}`;
        6️⃣ Create Booking
     ========================= */
 
-    const booking = await tx.booking.create({
-      data: {
-        bookingId,
-        productId,
-        bookingDate: normalizedDate,
-        totalAmount,
-        gstAmount,
-        bookingAmount,
-        paymentStatus: "locked",
-        lockExpiresAt,
+   const booking = await tx.booking.create({
+  data: {
+    bookingNumber: nextBookingNumber,
+    bookingId,
 
-        slots: {
-          create: slotIds.map((slotId) => ({
-            slotId,
-          })),
-        },
-      },
-    });
+    productId,
+    bookingDate: normalizedDate,
+
+    totalAmount,
+    gstAmount,
+    bookingAmount,
+
+    paymentStatus: "locked",
+    lockExpiresAt,
+
+    slots: {
+      create: slotIds.map((slotId) => ({
+        slotId,
+      })),
+    },
+  },
+});
 
     return booking;
   });
