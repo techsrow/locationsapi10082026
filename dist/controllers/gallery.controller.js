@@ -10,18 +10,46 @@ exports.galleryController = {
     async getById(req, res) {
         const gallery = await gallery_service_1.galleryService.getById(req.params.id);
         if (!gallery) {
-            return res
-                .status(404)
-                .json({ message: "Gallery image not found" });
+            return res.status(404).json({
+                message: "Gallery image not found",
+            });
         }
         res.json(gallery);
     },
     async create(req, res) {
-        const gallery = await gallery_service_1.galleryService.create(req.body);
+        const imageUrl = req.file
+            ? `/uploads/${req.file.filename}`
+            : "";
+        const gallery = await gallery_service_1.galleryService.create({
+            imageUrl,
+            imageType: req.body.imageType,
+            isActive: req.body.isActive === "true",
+        });
         res.status(201).json(gallery);
     },
+    //   async create(req: Request, res: Response) {
+    //     const gallery = await galleryService.create(
+    //       req.body
+    //     );
+    //     res.status(201).json(gallery);
+    //   },
+    //   async update(req: Request, res: Response) {
+    //     const gallery = await galleryService.update(
+    //       req.params.id,
+    //       req.body
+    //     );
+    //     res.json(gallery);
+    //   },
     async update(req, res) {
-        const gallery = await gallery_service_1.galleryService.update(req.params.id, req.body);
+        const data = {
+            imageType: req.body.imageType,
+            isActive: req.body.isActive === "true",
+        };
+        if (req.file) {
+            data.imageUrl =
+                `/uploads/${req.file.filename}`;
+        }
+        const gallery = await gallery_service_1.galleryService.update(req.params.id, data);
         res.json(gallery);
     },
     async delete(req, res) {
@@ -29,6 +57,13 @@ exports.galleryController = {
         res.json({
             success: true,
             message: "Gallery image deleted",
+        });
+    },
+    async reorder(req, res) {
+        await gallery_service_1.galleryService.reorder(req.body);
+        res.json({
+            success: true,
+            message: "Gallery order updated",
         });
     },
     async publicGallery(req, res) {

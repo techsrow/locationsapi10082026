@@ -21,6 +21,7 @@ const availability_routes_1 = __importDefault(require("./routes/availability.rou
 const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
 const analytics_routes_1 = __importDefault(require("./routes/analytics.routes"));
 const gallery_routes_1 = __importDefault(require("./routes/gallery.routes"));
+const page_routes_1 = __importDefault(require("./routes/page.routes"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -41,6 +42,7 @@ app.use("/api/availability", availability_routes_1.default);
 app.use("/api/razorpay", payment_routes_1.default);
 app.use("/api/payment", payment_routes_1.default);
 app.use("/api/analytics", analytics_routes_1.default);
-app.use("/gallery", gallery_routes_1.default);
+app.use("/api/gallery", gallery_routes_1.default);
 app.use("/api/bookings/webhook", express_1.default.raw({ type: "application/json" }));
+app.use("/pages", page_routes_1.default);
 exports.default = app;

@@ -16,6 +16,7 @@ import availabilityRoutes from "./routes/availability.routes"
 import paymentRoutes from "./routes/payment.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import galleryRoutes from "./routes/gallery.routes";
+import pageRoutes from "./routes/page.routes";
 
 
 
@@ -52,6 +53,7 @@ app.use(
   "/api/bookings/webhook",
   express.raw({ type: "application/json" })
 );
+app.use("/api/pages", pageRoutes);
 
 
 

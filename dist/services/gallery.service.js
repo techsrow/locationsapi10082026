@@ -49,4 +49,15 @@ exports.galleryService = {
             },
         });
     },
+    async reorder(items) {
+        await Promise.all(items.map((item) => prisma_1.default.gallery.update({
+            where: {
+                id: item.id,
+            },
+            data: {
+                displayOrder: item.displayOrder,
+            },
+        })));
+        return true;
+    },
 };
