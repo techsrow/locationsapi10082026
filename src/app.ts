@@ -15,6 +15,7 @@ import productRoutes from "./routes/product.routes";
 import availabilityRoutes from "./routes/availability.routes"
 import paymentRoutes from "./routes/payment.routes";
 import analyticsRoutes from "./routes/analytics.routes";
+import galleryRoutes from "./routes/gallery.routes";
 
 
 
@@ -45,6 +46,7 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/razorpay", paymentRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/gallery", galleryRoutes);
 
 app.use(
   "/api/bookings/webhook",

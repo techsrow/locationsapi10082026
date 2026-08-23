@@ -217,3 +217,14 @@ enum BookingStatus {
   cancelled
   expired
 }
+
+model Gallery {
+  id           String   @id @default(cuid())
+  imageUrl     String
+  displayOrder Int      @default(0)
+  imageType    String?  // wide | tall
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

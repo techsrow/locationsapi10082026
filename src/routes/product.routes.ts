@@ -10,6 +10,7 @@ import {
   deleteSlot,
   updateSlot
 } from "../controllers/product.controller";
+import { protect } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
@@ -42,7 +43,8 @@ router.get("/:slug", getProductBySlug);
 
 router.post("/add", addProduct);
 
-router.post("/add-slot", addSlot);
+router.post("/add-slot", protect, addSlot);
+router.put("/:id", updateProduct);
 
 /* PUT */
 router.put("/slot/:id", updateSlot);
