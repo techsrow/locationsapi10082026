@@ -6,6 +6,7 @@ import { protect } from "../middlewares/auth.middleware";
 import {
   uploadBride,
   getBride,
+  updateBrideCategory,
   deleteBrideImage,
   reorderBride,
 } from "../controllers/bride.controller";
@@ -90,7 +91,11 @@ router.post(
   upload.array("image", 20),
   uploadBride
 );
-
+router.put(
+  "/:id/category",
+  protect,
+  updateBrideCategory
+);
 router.delete("/:id", protect, deleteBrideImage);
 
 router.put("/reorder", protect, reorderBride);

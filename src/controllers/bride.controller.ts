@@ -9,19 +9,23 @@ import fs from "fs";
 export const uploadBride = async (req: Request, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
+    const category = (req.body.category || "INDIAN").toUpperCase();
 
     if (!files || files.length === 0) {
-      return res.status(400).json({ message: "Images required" });
+      return res.status(400).json({
+        message: "Images required",
+      });
     }
 
     const createdImages = [];
 
-    for (let file of files) {
+    for (const file of files) {
       const imageUrl = `/uploads/${file.filename}`;
 
       const data = await prisma.brideGallery.create({
         data: {
           imageUrl,
+          category,
           displayorder: 0,
         },
       });
@@ -35,23 +39,54 @@ export const uploadBride = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Upload failed" });
+    return res.status(500).json({
+      message: "Upload failed",
+    });
   }
 };
 
 // ===============================
 // ✅ Get Ordered Images
 // ===============================
-export const getBride = async (_req: Request, res: Response) => {
+// export const getBride = async (_req: Request, res: Response) => {
+//   try {
+//     const data = await prisma.brideGallery.findMany({
+//       orderBy: { displayorder: "asc" },
+//     });
+
+//     return res.json(data);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Fetch failed" });
+//   }
+// };
+
+export const getBride = async (
+  req: Request,
+  res: Response
+) => {
   try {
+    const category = (
+      req.query.category as string
+    )?.toUpperCase();
+
     const data = await prisma.brideGallery.findMany({
-      orderBy: { displayorder: "asc" },
+      where:
+        category &&
+        category !== "ALL"
+          ? { category }
+          : {},
+      orderBy: {
+        displayorder: "asc",
+      },
     });
 
     return res.json(data);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Fetch failed" });
+    return res.status(500).json({
+      message: "Fetch failed",
+    });
   }
 };
 
@@ -128,5 +163,50 @@ export const reorderBride = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Reorder failed" });
+  }
+};
+
+// ===============================
+// ✅ Update Category
+// ===============================
+export const updateBrideCategory = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { category } = req.body;
+
+    if (
+      !category ||
+      !["INDIAN", "WESTERN"].includes(
+        category.toUpperCase()
+      )
+    ) {
+      return res.status(400).json({
+        message: "Invalid category",
+      });
+    }
+
+    const updated =
+      await prisma.brideGallery.update({
+        where: { id },
+        data: {
+          category:
+            category.toUpperCase(),
+        },
+      });
+
+    return res.json({
+      message:
+        "Category updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Update failed",
+    });
   }
 };

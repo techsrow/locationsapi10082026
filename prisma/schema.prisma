@@ -18,6 +18,9 @@ model User {
 model BrideGallery {
   id           String   @id @default(uuid())
   imageUrl     String
+
+  category     String   @default("INDIAN")
+
   displayorder Int      @default(0)
   createdAt    DateTime @default(now())
 }
@@ -25,6 +28,9 @@ model BrideGallery {
 model GroomGallery {
   id           String   @id @default(uuid())
   imageUrl     String
+
+  category     String   @default("INDIAN")
+
   displayorder Int      @default(0)
   createdAt    DateTime @default(now())
 }
