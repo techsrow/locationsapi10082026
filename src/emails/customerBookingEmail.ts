@@ -1,3 +1,4 @@
+
 export const customerBookingEmail = (booking: any) => {
   return `
 <!DOCTYPE html>
@@ -6,7 +7,7 @@ export const customerBookingEmail = (booking: any) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Booking Confirmation</title>
+<title>Booking Notification</title>
 </head>
 
 <body style="
@@ -54,44 +55,9 @@ padding:40px 30px;
 text-align:center;
 ">
 
-<h1 style="
-margin:0;
-font-size:38px;
-font-weight:700;
-color:#222;
-line-height:1.2;
-">
 
-🎉 Congratulations!
 
-<span style="
-background:#f3d67b;
-padding:4px 10px;
-border-radius:4px;
-">
-We Are Booked For You
-</span>
 
-</h1>
-
-<p style="
-margin-top:15px;
-font-size:17px;
-line-height:1.7;
-color:#666;
-">
-
-Hello <strong>${booking.firstName}</strong>,
-
-<br><br>
-
-Your booking has been successfully confirmed.
-
-<br>
-
-We look forward to hosting your shoot at Locations Hub.
-
-</p>
 
 </div>
 
@@ -126,7 +92,8 @@ Details
 
 </h2>
 
-<table style="
+<table
+style="
 width:100%;
 border-collapse:collapse;
 table-layout:fixed;
@@ -142,6 +109,7 @@ padding:16px;
 border-bottom:1px solid #eee;
 text-align:right;
 font-weight:600;
+color:#222;
 ">
 ${booking.bookingId}
 </td>
@@ -149,7 +117,7 @@ ${booking.bookingId}
 
 <tr>
 <td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
-Booked Package
+Name
 </td>
 
 <td style="
@@ -158,7 +126,7 @@ border-bottom:1px solid #eee;
 text-align:right;
 font-weight:600;
 ">
-${booking.product}
+${booking.name}
 </td>
 </tr>
 
@@ -173,13 +141,28 @@ border-bottom:1px solid #eee;
 text-align:right;
 font-weight:600;
 ">
-${booking.date}
+${new Date(booking.date).toLocaleDateString("en-GB").replace(/\//g, "-")}
 </td>
 </tr>
 
 <tr>
 <td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
-Booked Slots
+Package
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+${booking.package}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Timings
 </td>
 
 <td style="
@@ -192,11 +175,102 @@ ${booking.slots}
 </td>
 </tr>
 
-</table>
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Package Cost
+</td>
 
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+₹${booking.packageCost}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Booking Cost
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+₹${booking.bookingCost}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+GST on Booking Cost (18%)
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+₹${booking.gstAmount}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Total Paid
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:700;
+color:#0b7a24;
+">
+₹${booking.totalPaid}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Balance Due
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:700;
+color:#c0392b;
+">
+₹${booking.due}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Payment Method
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+${booking.paymentMethod}
+</td>
+</tr>
+
+</table>
 </div>
 
-<!-- IMPORTANT NOTES -->
+<!-- NOTES -->
 
 <div style="
 padding:30px;
@@ -219,18 +293,18 @@ font-size:15px;
 
 <li>Timings cannot be shifted.</li>
 
-<li>Please reach 20 minutes prior for payment and booking formalities.</li>
+<li>Please reach 20 mins prior for payment and booking formalities.</li>
 
-<li>Dues + Security Deposit (Refundable) must be paid before the shoot.</li>
+<li>Dues + Deposit (Refundable) to be paid before the shoot.</li>
 
-<li>Please carry a valid Government ID proof.</li>
+<li>Please carry your ID Proof.</li>
 
-<li>Outside food and beverages are not allowed.</li>
+<li>Outside Food and Beverages are not allowed.</li>
 
-<li>All sets and props are on a sharing basis. Cooperative behaviour is expected.</li>
+<li>All Sets & Props are on sharing basis. Cooperative behavior is expected.</li>
 
 <li>
-Download the Google Location offline before starting your journey.
+Download Google Location Offline before starting.
 <br>
 <a href="https://maps.app.goo.gl/6pPZoJ6wMU8tsGET6">
 Open Map
@@ -253,7 +327,7 @@ border-top:1px solid #ececec;
 margin:0;
 ">
 
-<!-- SUPPORT -->
+<!-- BILLING -->
 
 <div style="
 padding:40px 30px;
@@ -265,7 +339,7 @@ text-align:center;
 margin-top:0;
 color:#222;
 ">
-Need Assistance?
+Billing Address
 </h2>
 
 <p style="
@@ -274,16 +348,25 @@ color:#555;
 margin:0;
 ">
 
-If you have any questions regarding your booking,
-please contact us.
+${booking.name}<br>
+
+${booking.address}<br>
+
+${booking.city} ${booking.postcode}<br>
+
+${booking.state}
 
 <br><br>
 
-📞 +91 8169232114
+<a href="tel:${booking.phone}">
+${booking.phone}
+</a>
 
 <br><br>
 
-📧 info@locationshub.in
+<a href="mailto:${booking.email}">
+${booking.email}
+</a>
 
 </p>
 

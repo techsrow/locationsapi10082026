@@ -163,105 +163,201 @@ export const verifyPayment = async (req: Request, res: Response) => {
       },
     });
 
+    // /* ------------------------------------
+    //    PREPARE DATA
+    // ------------------------------------- */
+
+    // const slotText = booking.slots.map((s: any) => s.slot.label).join(", ");
+
+    // const bookingDate = new Date(booking.bookingDate).toLocaleDateString();
+
+    // const packageCost = Number(booking.product.price);
+
+    // const bookingCost = Number(booking.bookingAmount);
+
+    // const gstAmount = Number(booking.gstAmount);
+
+    // const totalPaid = Number(booking.totalAmount);
+
+    // const dueAmount = packageCost - bookingCost;
+
+    // /* ------------------------------------
+    //    CUSTOMER EMAIL
+    // ------------------------------------- */
+
+    // try {
+    //   if (booking.email) {
+    //     await transporter.sendMail({
+    //       from: process.env.EMAIL_USER,
+
+    //       to: booking.email,
+
+    //       subject: `Congratulations! We Are Booked for You! - ${booking.bookingId}`,
+
+    //       html: customerBookingEmail({
+    //         bookingId: booking.bookingId,
+
+    //         firstName: booking.firstName || "Customer",
+
+    //         product: booking.product.name,
+
+    //         date: bookingDate,
+
+    //         slots: slotText,
+    //       }),
+    //     });
+    //   }
+    // } catch (err) {
+    //   console.error("Customer email failed:", err);
+    // }
+
+    // /* ------------------------------------
+    //    ADMIN EMAIL
+    // ------------------------------------- */
+
+    // try {
+    //   await transporter.sendMail({
+    //     from: process.env.EMAIL_USER,
+
+    //     to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+
+    //     subject: `🎉 Yay! We Have a Booking - ${booking.bookingId}`,
+
+    //     html: adminBookingEmail({
+    //       bookingId: booking.bookingId,
+
+    //       name: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
+
+    //       email: booking.email || "Not Provided",
+
+    //       date: bookingDate,
+
+    //       package: booking.product.name,
+
+    //       slots: slotText,
+
+    //       packageCost,
+
+    //       bookingCost,
+
+    //       gstAmount,
+
+    //       totalPaid,
+
+    //       due: dueAmount,
+
+    //       paymentMethod: "Razorpay",
+
+    //       address: booking.address || "-",
+
+    //       city: booking.city || "-",
+
+    //       postcode: booking.postcode || "-",
+
+    //       state: booking.state || "-",
+
+    //       phone: booking.phone || "-",
+    //     }),
+    //   });
+    // } catch (err) {
+    //   console.error("Admin email failed:", err);
+    // }
+
     /* ------------------------------------
-       PREPARE DATA
-    ------------------------------------- */
+   PREPARE DATA
+------------------------------------- */
 
-    const slotText = booking.slots.map((s: any) => s.slot.label).join(", ");
+const slotText = booking.slots.map((s: any) => s.slot.label).join(", ");
 
-    const bookingDate = new Date(booking.bookingDate).toLocaleDateString();
+const bookingDate = new Date(booking.bookingDate).toLocaleDateString();
 
-    const packageCost = Number(booking.product.price);
+const packageCost = Number(booking.product.price);
 
-    const bookingCost = Number(booking.bookingAmount);
+const bookingCost = Number(booking.bookingAmount);
 
-    const gstAmount = Number(booking.gstAmount);
+const gstAmount = Number(booking.gstAmount);
 
-    const totalPaid = Number(booking.totalAmount);
+const totalPaid = Number(booking.totalAmount);
 
-    const dueAmount = packageCost - bookingCost;
+const dueAmount = packageCost - bookingCost;
 
-    /* ------------------------------------
-       CUSTOMER EMAIL
-    ------------------------------------- */
+/* ------------------------------------
+   COMMON EMAIL DATA
+------------------------------------- */
 
-    try {
-      if (booking.email) {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+const emailData = {
+  bookingId: booking.bookingId,
 
-          to: booking.email,
+  name: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
 
-          subject: `Congratulations! We Are Booked for You! - ${booking.bookingId}`,
+  email: booking.email || "Not Provided",
 
-          html: customerBookingEmail({
-            bookingId: booking.bookingId,
+  date: bookingDate,
 
-            firstName: booking.firstName || "Customer",
+  package: booking.product.name,
 
-            product: booking.product.name,
+  slots: slotText,
 
-            date: bookingDate,
+  packageCost,
 
-            slots: slotText,
-          }),
-        });
-      }
-    } catch (err) {
-      console.error("Customer email failed:", err);
-    }
+  bookingCost,
 
-    /* ------------------------------------
-       ADMIN EMAIL
-    ------------------------------------- */
+  gstAmount,
 
-    try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+  totalPaid,
 
-        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+  due: dueAmount,
 
-        subject: `🎉 Yay! We Have a Booking - ${booking.bookingId}`,
+  paymentMethod: "Razorpay",
 
-        html: adminBookingEmail({
-          bookingId: booking.bookingId,
+  address: booking.address || "-",
 
-          name: `${booking.firstName || ""} ${booking.lastName || ""}`.trim(),
+  city: booking.city || "-",
 
-          email: booking.email || "Not Provided",
+  postcode: booking.postcode || "-",
 
-          date: bookingDate,
+  state: booking.state || "-",
 
-          package: booking.product.name,
+  phone: booking.phone || "-",
+};
 
-          slots: slotText,
+/* ------------------------------------
+   CUSTOMER EMAIL
+------------------------------------- */
 
-          packageCost,
+try {
+  if (booking.email) {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
 
-          bookingCost,
+      to: booking.email,
 
-          gstAmount,
+      subject: `Congratulations! We Are Booked for You! - ${booking.bookingId}`,
 
-          totalPaid,
+      html: customerBookingEmail(emailData),
+    });
+  }
+} catch (err) {
+  console.error("Customer email failed:", err);
+}
 
-          due: dueAmount,
+/* ------------------------------------
+   ADMIN EMAIL
+------------------------------------- */
 
-          paymentMethod: "Razorpay",
+try {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
 
-          address: booking.address || "-",
+    to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
 
-          city: booking.city || "-",
+    subject: `🎉 Yay! We Have a Booking - ${booking.bookingId}`,
 
-          postcode: booking.postcode || "-",
-
-          state: booking.state || "-",
-
-          phone: booking.phone || "-",
-        }),
-      });
-    } catch (err) {
-      console.error("Admin email failed:", err);
-    }
+    html: adminBookingEmail(emailData),
+  });
+} catch (err) {
+  console.error("Admin email failed:", err);
+}
 
     return res.json({
       success: true,

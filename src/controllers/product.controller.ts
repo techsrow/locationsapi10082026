@@ -245,22 +245,22 @@ export const addSlot = async (req: Request, res: Response) => {
       });
     }
 
-    /* CHECK OVERLAPPING SLOTS */
+//     /* CHECK OVERLAPPING SLOTS */
 
-   const existingSlots = await prisma.slot.findMany({
-  where: { productId }
-});
+//    const existingSlots = await prisma.slot.findMany({
+//   where: { productId }
+// });
 
-const overlap = existingSlots.some((slot: any) => {
-  return startTime < slot.endTime && endTime > slot.startTime;
-});
+// const overlap = existingSlots.some((slot: any) => {
+//   return startTime < slot.endTime && endTime > slot.startTime;
+// });
 
-if (overlap) {
-  return res.status(400).json({
-    success: false,
-    message: "Slot overlaps with existing slot"
-  });
-}
+// if (overlap) {
+//   return res.status(400).json({
+//     success: false,
+//     message: "Slot overlaps with existing slot"
+//   });
+// }
     const slot = await productService.createSlot({
       productId,
       label,
@@ -449,31 +449,31 @@ export const updateSlot = async (
       });
     }
 
-    /* Check overlap except current slot */
+    // /* Check overlap except current slot */
 
-    const existingSlots =
-      await prisma.slot.findMany({
-        where: {
-          productId: slot.productId,
-          NOT: {
-            id,
-          },
-        },
-      });
+    // const existingSlots =
+    //   await prisma.slot.findMany({
+    //     where: {
+    //       productId: slot.productId,
+    //       NOT: {
+    //         id,
+    //       },
+    //     },
+    //   });
 
-    const overlap = existingSlots.some(
-      (s) =>
-        startTime < s.endTime &&
-        endTime > s.startTime
-    );
+    // const overlap = existingSlots.some(
+    //   (s) =>
+    //     startTime < s.endTime &&
+    //     endTime > s.startTime
+    // );
 
-    if (overlap) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Slot overlaps with existing slot",
-      });
-    }
+    // if (overlap) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message:
+    //       "Slot overlaps with existing slot",
+    //   });
+    // }
 
     const label = formatSlotLabel(
       startTime,

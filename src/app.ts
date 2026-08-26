@@ -17,6 +17,8 @@ import paymentRoutes from "./routes/payment.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import galleryRoutes from "./routes/gallery.routes";
 import pageRoutes from "./routes/page.routes";
+import seoRoutes from "./routes/seo.routes";
+
 
 
 
@@ -54,6 +56,7 @@ app.use(
   express.raw({ type: "application/json" })
 );
 app.use("/api/pages", pageRoutes);
+app.use("/api/seo", seoRoutes);
 
 
 
