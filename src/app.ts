@@ -20,6 +20,7 @@ import pageRoutes from "./routes/page.routes";
 import seoRoutes from "./routes/seo.routes";
 import videoRoutes from "./routes/videoRoutes";
 import "./cron";
+import faqRoutes from "./routes/faq.routes";
 
 
 
@@ -60,6 +61,7 @@ app.use(
 app.use("/api/pages", pageRoutes);
 app.use("/api/seo", seoRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/api/faq", faqRoutes);
 
 
 
