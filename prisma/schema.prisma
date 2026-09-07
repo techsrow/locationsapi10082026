@@ -288,3 +288,4 @@ model Video {
   @@index([category])
   @@index([displayOrder])
 }
+
