@@ -1,5 +1,7 @@
+import { abandonedBookingEmail } from "../emails/abandonedBookingEmail";
 import prisma from "../lib/prisma";
 import { Request, Response } from "express";
+import transporter from "../services/email.service";
 
 
 
@@ -381,5 +383,59 @@ export const getLockedDates = async (
       success: false,
       message: "Failed to fetch locked dates",
     });
+  }
+};
+
+export const testAbandonedBookingEmail = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+
+    const { bookingId } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: {
+        bookingId,
+      },
+
+      include: {
+        product: true,
+        slots: {
+          include: {
+            slot: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL,
+      subject: `⚠ Test Abandoned Checkout - ${booking.bookingId}`,
+      html: abandonedBookingEmail(booking),
+    });
+
+    return res.json({
+      success: true,
+      message: "Test email sent",
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send email",
+    });
+
   }
 };

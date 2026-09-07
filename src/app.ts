@@ -19,6 +19,7 @@ import galleryRoutes from "./routes/gallery.routes";
 import pageRoutes from "./routes/page.routes";
 import seoRoutes from "./routes/seo.routes";
 import videoRoutes from "./routes/videoRoutes";
+import "./cron";
 
 
 
