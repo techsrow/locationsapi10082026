@@ -18,6 +18,7 @@ import analyticsRoutes from "./routes/analytics.routes";
 import galleryRoutes from "./routes/gallery.routes";
 import pageRoutes from "./routes/page.routes";
 import seoRoutes from "./routes/seo.routes";
+import videoRoutes from "./routes/videoRoutes";
 
 
 
@@ -57,6 +58,7 @@ app.use(
 );
 app.use("/api/pages", pageRoutes);
 app.use("/api/seo", seoRoutes);
+app.use("/api/videos", videoRoutes);
 
 
 
