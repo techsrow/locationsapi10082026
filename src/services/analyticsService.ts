@@ -60,6 +60,8 @@ export const getDashboardAnalyticsService = async () => {
     }
   });
 
+  
+
   const revenueMap: Record<string, number> = {};
 
   monthlyBookings.forEach((b) => {
@@ -80,6 +82,31 @@ export const getDashboardAnalyticsService = async () => {
   }));
 
 
+  // 7️⃣ Booking Sources
+
+  // 7️⃣ Booking Sources
+
+const sourceBookings = await prisma.booking.findMany({
+  select: {
+    source: true,
+  },
+});
+
+const sourceMap: Record<string, number> = {};
+
+sourceBookings.forEach((booking) => {
+  const source = booking.source || "Unknown";
+
+  sourceMap[source] = (sourceMap[source] || 0) + 1;
+});
+
+const bookingSources = Object.keys(sourceMap).map((source) => ({
+  source,
+  count: sourceMap[source],
+}));
+
+
+
   // 6️⃣ Top packages
   const products = await prisma.product.findMany({
     include: {
@@ -96,9 +123,12 @@ export const getDashboardAnalyticsService = async () => {
     .slice(0, 5);
 
 
+    
+
   return {
     totalBookings,
     revenue,
+    bookingSources,
     pendingPayments,
     todayBookings,
     monthlyRevenue,

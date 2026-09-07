@@ -298,6 +298,36 @@ font-weight:600;
 ${booking.paymentMethod}
 </td>
 </tr>
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Source
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+">
+${booking.source || "-"}
+</td>
+</tr>
+
+<tr>
+<td style="padding:16px;border-bottom:1px solid #eee;color:#555;">
+Customer Notes
+</td>
+
+<td style="
+padding:16px;
+border-bottom:1px solid #eee;
+text-align:right;
+font-weight:600;
+white-space:pre-wrap;
+">
+${booking.notes || "-"}
+</td>
+</tr>
 
 </table>
 

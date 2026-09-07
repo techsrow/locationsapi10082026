@@ -22,7 +22,9 @@ export const lockBooking = async (req: Request, res: Response) => {
       address,
       city,
       state,
-      postcode
+      postcode,
+      source,
+  notes,
     } = req.body;
 
     if (!productId || !date || !slotIds || !Array.isArray(slotIds)) {
@@ -96,6 +98,8 @@ const bookingId = `LH-${String(
     city,
     state,
     postcode,
+    source,
+  notes,
 
     paymentStatus: "locked",
 
